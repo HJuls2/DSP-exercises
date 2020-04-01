@@ -35,16 +35,6 @@ def histogram(letter_frequencies, alphabet):
     plt.show()
     plt.pause(2)
 
-def m_gram_histogram(m_grams_frequencies, labels):
-    #  FIXME : plot it correctly
-    plt.bar(x = [num for num in range(0,len(m_grams_frequencies))], height = m_grams_frequencies, width = 13)
-    plt.xticks(ticks = np.arange(0,len(m_grams_frequencies),step=1), labels=labels)
-    plt.xlabel('m-gram')
-    plt.ylabel('Frequency')
-    plt.title('n-grams Frequency Histogram')
-    plt.ion()
-    plt.show()
-    plt.pause(10)
 
 # Function for point 1
 def letter_frequency(text, alphabet):
@@ -61,7 +51,6 @@ def m_gram_distribution(text, m):
 
 # Function for point 3a
 def coincidence_index(text, alphabet):
-    alphabet = 'abcdefghijklmnopqrstuvwxyz'
     denominator = len(text)*(len(text)-1)
     index_of_coincidence = 0
     for letter in alphabet:
@@ -70,10 +59,8 @@ def coincidence_index(text, alphabet):
     return index_of_coincidence
 
 
-def shannon_entropy(letters_frequencies):
-    letters_probabilities = [0.12702,0.09056,0.08167,0.07507,0.06966,0.06749,0.06327,0.06094, 0.05987, 0.04253, 0.04025,0.02782,0.02758, 
-        0.02406, 0.02360, 0.02228, 0.02015, 0.01974, 0.01929, 0.01492, 0.00978,0.00772, 0.00153, 0.00150, 0.00095,0.00074]
-    return -sum([ p*math.log(p,2) for p in letters_probabilities])
+def shannon_entropy(m_gram_distribution):
+    return -sum([ p*math.log(p,2) for p in m_gram_distribution.values()])
 
 
 
@@ -92,15 +79,16 @@ def main():
 
     print("Insert lenght m for the m-grams")
     m = input() # FIXME : check correct input
+    distribution = m_gram_distribution(text,int(m))
     print("### EMPIRIC M-GRAMS DISTRIBUTION ###")
-    print(m_gram_distribution(text,int(m)))
+    print(distribution)
 
     index_of_coincidence = coincidence_index(text,alphabet)
     print("### INDEX OF COINCIDENCE ###")
     print(index_of_coincidence)
 
 
-    entropy = shannon_entropy(letter_frequencies)
+    entropy = shannon_entropy(distribution)
     print('### SHANNON ENTROPY')
     print(entropy)
 
