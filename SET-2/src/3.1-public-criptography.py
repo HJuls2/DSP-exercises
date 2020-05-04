@@ -63,12 +63,17 @@ def test_rabin(n, x=2):
 
 # 3.1.4) Algoritmo di generazione di numeri primi    
 def prime_generator(order):
+    #returns a prime number (first value) with probability in second return value
     number = random_number_generator(order)
-    while test_rabin(number) is True:
-        number = random_number_generator(order)
-
+    witnesses = set(random.randint(2,number-1) for i in range(10))
+    results = [test_rabin(number,x) for x in witnesses]
     
-    return number
+    while True in results:
+        number = random_number_generator(order)
+        witnesses = set(random.randint(2,number-1) for i in range(10))
+        results = [test_rabin(number,x) for x in witnesses]
+    
+    return number, 1-(1/(4**len(witnesses)))
 
 def random_number_generator(order, flags=(False,True)):
     bits = [ flags[random.getrandbits(1)] for i in range(order)]
@@ -83,7 +88,7 @@ def random_number_generator(order, flags=(False,True)):
 # 3.1.5) Schema RSA con e senza CRT
 def define_RSA_scheme(p = None, q = None, useCrt = False):
     if not p and not q:
-        p,q = prime_generator(100), prime_generator(100)
+        p,q = prime_generator(100)[0], prime_generator(100)[0]
     if p < q:
         p,q = q,p
     n, phi_n = p*q, (p-1)*(q-1)
@@ -185,7 +190,9 @@ def compute_es_2_4():
 
 def main():
     # 3.1.1) Extended euclidean algorithm test
-    x,y, gcd = extended_euclidean_alghorithm(prime_generator(100),prime_generator(100))
+    a,_ = prime_generator(100)
+    b,_ = prime_generator(100)
+    x,y, gcd = extended_euclidean_alghorithm(a,b)
     print(f'x: {x}, y : {y%60}, GCD(x,y): {gcd}')
     
     # 3.1.2) Fast modular exponentiation algorithm test
@@ -216,8 +223,8 @@ def main():
     print(f'\n87545265415412418975674774894174892 (a even number --> a composite number) returns {result}')
 
     # 3.1.4) Prime generation test
-    number = prime_generator(order=100)
-    print(f'\n{number} is a prime generated using Miller Rabin test')
+    number, probability = prime_generator(order=100)
+    print(f'\n{number} is a prime (with probability {probability}) generated using Miller Rabin test')
 
     #3.1.5) RSA testing
     RSA_test()
@@ -228,9 +235,6 @@ def main():
     print(f'\nMean execution time of RSA decryption: {mean_exec_time} seconds\nMean execution time of RSA decryption with CRT optimization: {mean_crt_exec_time} seconds')
     print(f'CRT-optimized RSA is {100-(100*mean_crt_exec_time)/mean_exec_time}% faster than the basic RSA')
 
-def test():
-     result = test_rabin(167,5)
-     print(result)
 
 if __name__ == "__main__":
     main()
