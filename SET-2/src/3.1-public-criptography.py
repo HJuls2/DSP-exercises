@@ -26,6 +26,10 @@ def fast_exponentiation_modular_algh(a,n, modulus):
 
 # 3.1.3) Test di Miller-Rabin
 def test_rabin(n, x=2):
+    _,_,gcd = extended_euclidean_alghorithm(n,x)
+    if gcd != 1:
+        return False
+    
     nm1 = n -1
     support_var = nm1
     r = 0
@@ -44,9 +48,10 @@ def test_rabin(n, x=2):
             # Check if m is odd
             if m%2 != 0:
                 break
+
     sequence = [1 for i in range(r+1)]
-    sequence[0] = fast_exponentiation_modular_algh(2,m,n)
-    if sequence[0] == 1:
+    sequence[0] = fast_exponentiation_modular_algh(x,m,n)
+    if sequence[0] == 1 or sequence[0] == nm1:
         return False
 
     for i in range(1,len(sequence)):
@@ -62,6 +67,7 @@ def prime_generator(order):
     while test_rabin(number) is True:
         number = random_number_generator(order)
 
+    
     return number
 
 def random_number_generator(order, flags=(False,True)):
@@ -115,54 +121,6 @@ def RSA_CRT_decryption(ciphertext,p,dp,q,dq,qinv):
     m2 = fast_exponentiation_modular_algh(ciphertext,dq,q)
     h = qinv * (m1-m2)%p
     return m2 + h*q
-
-
-
-
-def main():
-    # 3.1.1) Extended euclidean algorithm test
-    x,y, gcd = extended_euclidean_alghorithm(prime_generator(100),prime_generator(100))
-    print(f'x: {x}, y : {y%60}, GCD(x,y): {gcd}')
-    
-    # 3.1.2) Fast modular exponentiation algorithm test
-    base,exponent,modulus = 7**100,10**100,random.randint(0,10**100)
-    d = fast_exponentiation_modular_algh(base,exponent,modulus)
-    print(f'\n{d} is the {exponent}-th power of {base} modulus {modulus}')
-
-    # 3.1.3) Miller-Rabin test in action
-
-    # Test with a prime number with different witnesses
-    result = test_rabin(167)
-
-    witnesses = [3,5,7,11]
-    witnesses_iterator = iter(witnesses)
-    witness = next(witnesses_iterator)
-    while not result:
-        result = test_rabin(167,witness)
-        try:
-            witness = next(witnesses_iterator)
-        except StopIteration:
-            break
-
-
-    print(f'167 returns {result} with 2,3,5,7,11 as witnesses')
-
-    # Test with a composite number
-    result = test_rabin(87545265415412418975674774894174892)
-    print(f'\n87545265415412418975674774894174892 (a even number --> a composite number) returns {result}')
-
-    # 3.1.4) Prime generation test
-    number = prime_generator(order=100)
-    print(f'\n{number} is a prime generated using Miller Rabin test')
-
-    #3.1.5) RSA testing
-    RSA_test()
-
-    #3.1.6) RSA performance: compute the mean execution time of RSA and RSA optimized with CRT (over 1000 executions)
-    times = [RSA_performance() for i in range(1000)]
-    mean_exec_time, mean_crt_exec_time = sum([t[0] for t in times])/1000, sum([t[1] for t in times])/1000
-    print(f'\nMean execution time of RSA decryption: {mean_exec_time} seconds\nMean execution time of RSA decryption with CRT optimization: {mean_crt_exec_time} seconds')
-    print(f'CRT-optimized RSA is {100-(100*mean_crt_exec_time)/mean_exec_time}% faster than the basic RSA')
 
 
 def RSA_test():
@@ -222,10 +180,57 @@ def compute_es_2_4():
     result = (fast_exponentiation_modular_algh(c1_inv,a,n) * fast_exponentiation_modular_algh(c2,b,n)) % n
     print(result)
 
+
+
+
+def main():
+    # 3.1.1) Extended euclidean algorithm test
+    x,y, gcd = extended_euclidean_alghorithm(prime_generator(100),prime_generator(100))
+    print(f'x: {x}, y : {y%60}, GCD(x,y): {gcd}')
     
+    # 3.1.2) Fast modular exponentiation algorithm test
+    base,exponent,modulus = 7**100,10**100,random.randint(0,10**100)
+    d = fast_exponentiation_modular_algh(base,exponent,modulus)
+    print(f'\n{d} is the {exponent}-th power of {base} modulus {modulus}')
+
+    # 3.1.3) Miller-Rabin test in action
+
+    # Test with a prime number with different witnesses
+    result = test_rabin(167)
+
+    witnesses = [3,5,7,11]
+    witnesses_iterator = iter(witnesses)
+    witness = next(witnesses_iterator)
+    while not result:
+        result = test_rabin(167,witness)
+        try:
+            witness = next(witnesses_iterator)
+        except StopIteration:
+            break
 
 
+    print(f'167 returns {result} with 2,3,5,7,11 as witnesses')
 
+    # Test with a composite number
+    result = test_rabin(87545265415412418975674774894174892)
+    print(f'\n87545265415412418975674774894174892 (a even number --> a composite number) returns {result}')
+
+    # 3.1.4) Prime generation test
+    number = prime_generator(order=100)
+    print(f'\n{number} is a prime generated using Miller Rabin test')
+
+    #3.1.5) RSA testing
+    RSA_test()
+
+    #3.1.6) RSA performance: compute the mean execution time of RSA and RSA optimized with CRT (over 1000 executions)
+    times = [RSA_performance() for i in range(1000)]
+    mean_exec_time, mean_crt_exec_time = sum([t[0] for t in times])/1000, sum([t[1] for t in times])/1000
+    print(f'\nMean execution time of RSA decryption: {mean_exec_time} seconds\nMean execution time of RSA decryption with CRT optimization: {mean_crt_exec_time} seconds')
+    print(f'CRT-optimized RSA is {100-(100*mean_crt_exec_time)/mean_exec_time}% faster than the basic RSA')
+
+def test():
+     result = test_rabin(167,5)
+     print(result)
 
 if __name__ == "__main__":
     main()
