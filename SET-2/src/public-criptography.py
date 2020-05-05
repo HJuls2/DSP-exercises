@@ -1,4 +1,5 @@
 import random
+import statistics as stat
 import time
 
 # 3.1.1) Algoritmo euclideo esteso
@@ -62,15 +63,15 @@ def test_rabin(n, x=2):
     return True
 
 # 3.1.4) Algoritmo di generazione di numeri primi    
-def prime_generator(order):
+def prime_generator(order=300):
     #returns a prime number (first value) with probability in second return value
     number = random_number_generator(order)
-    witnesses = set(random.randint(2,number-1) for i in range(10))
+    witnesses = set(random.randint(2,number-1) for i in range(25))
     results = [test_rabin(number,x) for x in witnesses]
     
     while True in results:
         number = random_number_generator(order)
-        witnesses = set(random.randint(2,number-1) for i in range(10))
+        witnesses = set(random.randint(2,number-1) for i in range(25))
         results = [test_rabin(number,x) for x in witnesses]
     
     return number, 1-(1/(4**len(witnesses)))
@@ -86,25 +87,29 @@ def random_number_generator(order, flags=(False,True)):
 
 
 # 3.1.5) Schema RSA con e senza CRT
-def define_RSA_scheme(p = None, q = None, useCrt = False):
+def define_RSA_scheme(p = None, q = None):
     if not p and not q:
-        p,q = prime_generator(100)[0], prime_generator(100)[0]
+        p,q = prime_generator()[0], prime_generator()[0]
     if p < q:
         p,q = q,p
     n, phi_n = p*q, (p-1)*(q-1)
 
-    d = random.randint(0,n-1)
-    _,y,gcd = extended_euclidean_alghorithm(phi_n,d)
+    d = random.randint(1,n-1)
+    if phi_n > d:
+        _,y,gcd = extended_euclidean_alghorithm(phi_n,d)
+    else:
+        y,_,gcd = extended_euclidean_alghorithm(phi_n,d)
+
 
     while gcd != 1:
-        d = random.randint(0,n-1)
-        _,y,gcd = extended_euclidean_alghorithm(phi_n,d)
+        d = random.randint(1,n-1)
+        if phi_n > d:
+            _,y,gcd = extended_euclidean_alghorithm(phi_n,d)
+        else:
+            y,_,gcd = extended_euclidean_alghorithm(phi_n,d)
 
-    e =  y%n
+    e =  y%phi_n
 
-    if useCrt:
-        return p,q,n,d,e, compute_CRT_params(d,p,q)
-    
     return p,q,n,d,e
 
 
@@ -112,7 +117,8 @@ def compute_CRT_params(d,p,q):
     # p > q
     # return dp,dq, inverse of q modulus p
     _,y,_ = extended_euclidean_alghorithm(p,q)
-    return d%(p-1),d%(q-1), y%p
+    dp,dq,qinv = d%(p-1),d%(q-1), y%p
+    return dp,dq,qinv
 
 def RSA_encryption(message,e,n):
     return fast_exponentiation_modular_algh(message,e,n)
@@ -154,44 +160,24 @@ def RSA_test():
     print("\nDecryption time: %s seconds" %(end_time-start_time))
     print("Decryption time using CRT: %s seconds" %(crt_end_time-crt_start_time))
 
-def RSA_performance():
-    p,q,n,d,e = define_RSA_scheme()
-    plaintexts = [random.randint(0,n) for i in range(100)]
-    ciphertexts = [ RSA_encryption(m,e,n) for m in plaintexts]
-
+def RSA_performance(ciphertext,p,q,n,d,e,dp,dq,qinv):
+    
     # Time without CRT
     start_time = time.time()
-    deciphered_messages = [ RSA_decryption(c,d,n) for c in ciphertexts]
+    deciphered_message= RSA_decryption(ciphertext,d,n)
     exec_time = time.time() - start_time
 
     # Time with CRT
-    dp,dq, qinv = compute_CRT_params(d,p,q)
     start_time = time.time()
-    deciphered_messages_with_crt = [RSA_CRT_decryption(c,p,dp,q,dq,qinv) for c in ciphertexts]
-    crt_exec_time = time.time() -start_time
+    deciphered_messages_with_crt = RSA_CRT_decryption(ciphertext,p,dp,q,dq,qinv)
+    crt_exec_time = time.time() - start_time
 
     return exec_time,crt_exec_time
 
-def compute_es_2_4():
-    n = 1200867589138402836833011627922648843865398758356119243237528992192661195883356632897345588719304934438534205354787918897834861577085344762327143956220911721261528444200091612203799709834594997775067917847690315178675148605331912292785817786238119642200812571328900475396454557843711810878201457471117182510681991129539167165552073440243913144926216242708247975357913354302233984628116835035339887667027876020733894592318754941490852771134623356130705203596572659
-    c1 =  13740701343175031613859506260680271
-    c2 = 442020648620790478265510268903148188611479520134128911
 
-    x,y,gcd = extended_euclidean_alghorithm(n,c1)
-    print(f'x:{x}, y: {y}, gcd: {gcd}')
-    
-    c1_inv = y % n
-    a,b = -3,2
-    result = (fast_exponentiation_modular_algh(c1_inv,a,n) * fast_exponentiation_modular_algh(c2,b,n)) % n
-    print(result)
-
-
-
-
-def main():
+def es_3_1():
     # 3.1.1) Extended euclidean algorithm test
-    a,_ = prime_generator(100)
-    b,_ = prime_generator(100)
+    a,b = prime_generator()[0],prime_generator()[0]
     x,y, gcd = extended_euclidean_alghorithm(a,b)
     print(f'x: {x}, y : {y%60}, GCD(x,y): {gcd}')
     
@@ -220,21 +206,131 @@ def main():
 
     # Test with a composite number
     result = test_rabin(87545265415412418975674774894174892)
+    
+    while result is False:
+        result = test_rabin(87545265415412418975674774894174892,random.randint(3,87545265415412418975674774894174892-1))
+        
     print(f'\n87545265415412418975674774894174892 (a even number --> a composite number) returns {result}')
 
     # 3.1.4) Prime generation test
-    number, probability = prime_generator(order=100)
+    number, probability = prime_generator()
     print(f'\n{number} is a prime (with probability {probability}) generated using Miller Rabin test')
 
     #3.1.5) RSA testing
     RSA_test()
 
-    #3.1.6) RSA performance: compute the mean execution time of RSA and RSA optimized with CRT (over 1000 executions)
-    times = [RSA_performance() for i in range(1000)]
-    mean_exec_time, mean_crt_exec_time = sum([t[0] for t in times])/1000, sum([t[1] for t in times])/1000
+    #3.1.6) RSA performance: fix a RSA scheme and compute the mean execution time of RSA and CRT-optimized-RSA (over 100 executions)
+    p,q,n,d,e = define_RSA_scheme()
+    dp,dq,qinv = compute_CRT_params(d,p,q)
+    ciphertexts = [RSA_encryption(random.randint(10**100,10**101-1),e,n) for i in range(100)]
+    times = [RSA_performance(c,p,q,n,d,e,dp,dq,qinv) for c in ciphertexts]
+    mean_exec_time, mean_crt_exec_time = sum([t[0] for t in times])/100, sum([t[1] for t in times])/100
+
     print(f'\nMean execution time of RSA decryption: {mean_exec_time} seconds\nMean execution time of RSA decryption with CRT optimization: {mean_crt_exec_time} seconds')
     print(f'CRT-optimized RSA is {100-(100*mean_crt_exec_time)/mean_exec_time}% faster than the basic RSA')
 
+# -----------------------------------------------------------------------------------------------------------------------------------------------------
+
+def decryptionexp(n,d,e):
+    print(f'n: {n}')
+
+    start_time = time.time()
+    edm1 = (e*d)-1
+    support_var = edm1
+    r = 0
+    while support_var%2 == 0:
+        r+=1
+        support_var = support_var // 2
+
+    print(f'r:{r}')
+    
+    m = 0
+    support_var = r
+    while support_var != 0:
+        # Check if 2**r | n-1
+        if edm1 % (2**support_var) != 0:
+            support_var-=1
+        else:
+            m =  edm1//2**r
+            # Check if m is odd
+            if m%2 != 0:
+                break
+
+    # Find x in Zn*
+    x = random.randint(2,n-1)
+    while extended_euclidean_alghorithm(n,x)[2] != 1:
+        x = random.randint(2,n-1)
+
+
+    xjm1,xj= fast_exponentiation_modular_algh(x,m,n),fast_exponentiation_modular_algh(x,2*m,n)
+    j=1
+    while not(xj == 1 and (xjm1%n) != (n-1)):
+        xjm1 = xj
+        xj = fast_exponentiation_modular_algh(xjm1,2,n)
+        j+=1
+
+    print(f'Number of iterations: {j}')
+    
+    factor,num_iterations,attack_time = extended_euclidean_alghorithm(n,xjm1+1)[2], j, time.time()-start_time
+    return factor,num_iterations,attack_time
+
+
+
+def es_3_2():
+    iterations,times= list(),list()
+
+    for i in range(100):
+        print(f'{i}-th iteration started' )
+        _,_,n,d,e = define_RSA_scheme()
+        if extended_euclidean_alghorithm(n,d)[2] != 1:
+            continue
+        p,num_iterations,attack_time = decryptionexp(n,d,e)
+        print('##################################################################################################')
+        iterations.append(num_iterations)
+        times.append(attack_time)
+
+    mean_iterations = stat.mean(iterations)
+    print(iterations)
+    mean_time = stat.mean(times)
+    variance = stat.pvariance(times)
+    print(times)
+    print( f'E[iterations] = {mean_iterations}, E[time] = {mean_time}, Var[time] = {variance}')
+
+
+def test():
+    n = 503919036014242335194846714750162334366120865199550786867141
+    while not(test_rabin(n,random.randint(2,n-1))):
+        print(False)
+    
+    print(True)
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------
+def compute_es_2_4():
+    n = 1200867589138402836833011627922648843865398758356119243237528992192661195883356632897345588719304934438534205354787918897834861577085344762327143956220911721261528444200091612203799709834594997775067917847690315178675148605331912292785817786238119642200812571328900475396454557843711810878201457471117182510681991129539167165552073440243913144926216242708247975357913354302233984628116835035339887667027876020733894592318754941490852771134623356130705203596572659
+    c1 =  13740701343175031613859506260680271
+    c2 = 442020648620790478265510268903148188611479520134128911
+
+    x,y,gcd = extended_euclidean_alghorithm(n,c1)
+    print(f'x:{x}, y: {y}, gcd: {gcd}')
+    
+    c1_inv = y % n
+    a,b = -3,2
+    result = (fast_exponentiation_modular_algh(c1_inv,a,n) * fast_exponentiation_modular_algh(c2,b,n)) % n
+    print(result)
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------
+
+def main():
+    print("Which exercise do you want to run?\nPress 1 for exercise 3.1 and 2 for exercise 3.2")
+    x = input()
+    while x not in ['1','2']:
+        print("Please enter a valid input. Press 1 for exercise 3.1 and 2 for exercise 3.2")
+    
+    if x=='1':
+        es_3_1()
+    else:
+        es_3_2()
 
 if __name__ == "__main__":
     main()
+    
