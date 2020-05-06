@@ -232,8 +232,6 @@ def es_3_1():
 # -----------------------------------------------------------------------------------------------------------------------------------------------------
 
 def decryptionexp(n,d,e):
-    print(f'n: {n}')
-
     start_time = time.time()
     edm1 = (e*d)-1
     support_var = edm1
@@ -242,8 +240,6 @@ def decryptionexp(n,d,e):
         r+=1
         support_var = support_var // 2
 
-   
-    
     m = 0
     support_var = r
     while support_var != 0:
@@ -256,12 +252,10 @@ def decryptionexp(n,d,e):
             if m%2 != 0:
                 break
     
-    print(f'r:{r}\nm: {m}')
     # Find x in Zn*
     x = random.randint(2,n-1)
     while extended_euclidean_alghorithm(n,x)[2] != 1:
         x = random.randint(2,n-1)
-
 
     xjm1,xj= fast_exponentiation_modular_algh(x,m,n),fast_exponentiation_modular_algh(x,2*m,n)
     iterations = 0
@@ -270,9 +264,10 @@ def decryptionexp(n,d,e):
         xj = fast_exponentiation_modular_algh(xjm1,2,n)
         iterations += 1
 
-    print(f'Number of iterations: {iterations}')
-    
     factor,attack_time = extended_euclidean_alghorithm(n,xjm1+1)[2],time.time()-start_time
+    print(f'n: {n}')
+    print(f'r:{r}\nm: {m}')
+    print(f'Number of iterations: {iterations}')
     return factor,iterations,attack_time
 
 
