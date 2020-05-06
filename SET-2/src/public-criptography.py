@@ -242,7 +242,7 @@ def decryptionexp(n,d,e):
         r+=1
         support_var = support_var // 2
 
-    print(f'r:{r}')
+   
     
     m = 0
     support_var = r
@@ -255,7 +255,8 @@ def decryptionexp(n,d,e):
             # Check if m is odd
             if m%2 != 0:
                 break
-
+    
+    print(f'r:{r}\nm: {m}')
     # Find x in Zn*
     x = random.randint(2,n-1)
     while extended_euclidean_alghorithm(n,x)[2] != 1:
@@ -263,16 +264,16 @@ def decryptionexp(n,d,e):
 
 
     xjm1,xj= fast_exponentiation_modular_algh(x,m,n),fast_exponentiation_modular_algh(x,2*m,n)
-    j=1
+    iterations = 0
     while not(xj == 1 and (xjm1%n) != (n-1)):
         xjm1 = xj
         xj = fast_exponentiation_modular_algh(xjm1,2,n)
-        j+=1
+        iterations += 1
 
-    print(f'Number of iterations: {j}')
+    print(f'Number of iterations: {iterations}')
     
-    factor,num_iterations,attack_time = extended_euclidean_alghorithm(n,xjm1+1)[2], j, time.time()-start_time
-    return factor,num_iterations,attack_time
+    factor,attack_time = extended_euclidean_alghorithm(n,xjm1+1)[2],time.time()-start_time
+    return factor,iterations,attack_time
 
 
 
@@ -290,19 +291,10 @@ def es_3_2():
         times.append(attack_time)
 
     mean_iterations = stat.mean(iterations)
-    print(iterations)
     mean_time = stat.mean(times)
-    variance = stat.pvariance(times)
-    print(times)
+    variance = stat.pvariance(times,mean_time)
     print( f'E[iterations] = {mean_iterations}, E[time] = {mean_time}, Var[time] = {variance}')
 
-
-def test():
-    n = 503919036014242335194846714750162334366120865199550786867141
-    while not(test_rabin(n,random.randint(2,n-1))):
-        print(False)
-    
-    print(True)
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------
 def compute_es_2_4():
