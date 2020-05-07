@@ -64,7 +64,7 @@ def test_rabin(n, x=2):
 
 # 3.1.4) Algoritmo di generazione di numeri primi    
 def prime_generator(order=300):
-    #returns a prime number (first value) with probability in second return value
+    #returns a prime number (first value) with error probability in second return value
     number = random_number_generator(order)
     witnesses = set(random.randint(2,number-1) for i in range(25))
     results = [test_rabin(number,x) for x in witnesses]
@@ -74,7 +74,7 @@ def prime_generator(order=300):
         witnesses = set(random.randint(2,number-1) for i in range(25))
         results = [test_rabin(number,x) for x in witnesses]
     
-    return number, 1-(1/(4**len(witnesses)))
+    return number, 1/(4**len(witnesses))
 
 def random_number_generator(order, flags=(False,True)):
     bits = [ flags[random.getrandbits(1)] for i in range(order)]
@@ -214,7 +214,7 @@ def es_3_1():
 
     # 3.1.4) Prime generation test
     number, probability = prime_generator()
-    print(f'\n{number} is a prime (with probability {probability}) generated using Miller Rabin test')
+    print(f'\n{number} is a prime (with error probability lower than {probability})')
 
     #3.1.5) RSA testing
     RSA_test()
